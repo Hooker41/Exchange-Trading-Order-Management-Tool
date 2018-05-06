@@ -1,0 +1,14 @@
+.section-title{
+    background-color: rgb(238,238,238);
+}
+
+.flex-container {
+    display: flex;
+    padding-bottom: 10px;
+    font-size: 16px;
+}
+
+.flex-container > div {
+    padding-right: 10px;
+    width: 200px;
+}
