@@ -11,6 +11,11 @@ export default {
       icon: 'icon-settings',
     },
     {
+      name: 'Trade',
+      url: '/trade',
+      icon: 'icon-directions',
+    },
+    {
       name: 'Login',
       url: '/login',
       icon: 'icon-star',
@@ -20,5 +25,6 @@ export default {
       url: '/register',
       icon: 'icon-drop',
     },
+    
   ],
 };

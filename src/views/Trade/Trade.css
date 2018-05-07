@@ -1,0 +1,30 @@
+.chartWidget{
+    height: 500px;
+}
+
+.panel{
+    border: solid 1px;
+}
+
+.del_tg_flex{
+    display: flex;
+    justify-content: flex-start;
+}
+
+.del_tg_flex > div {
+    padding-right: 10px;
+    width: 200px;
+}
+
+.icon_trash{
+    padding: 0.5rem 1rem;
+}
+
+.btn_trade{
+    display: flex;
+    justify-content: center;
+}
+
+.btn_trade>button{
+    width:50%;
+}
