@@ -15,6 +15,11 @@ export const connectExchange = ({
     secret
 }));
 export const disconnectExchange = (exchange) => axios.get('/api/v1.0/disconnect/?exchange=' + exchange);
+export const getTicker = ({exchange, pair}) => axios.post('/api/v1.0/getticker', qs.stringify({
+    exchange,
+    pair
+}));
+
 // csrftoken = Cookies.get('csrftoken'); // Using JS Cookies library
 // headers = {HTTP_X_CSRFTOKEN: csrftoken};
 // axios.post(url,data,{headers: headers});

@@ -9,6 +9,7 @@ import {bindActionCreators} from 'redux';
 import { withRouter } from 'react-router';
 
 import * as exchangeActions from 'store/modules/exchange';
+import config from 'config.json';
 
 const propTypes = {
   children: PropTypes.node,
@@ -23,8 +24,8 @@ class FullAside extends Component {
 
     this.state = {
       visible: true,
-      apikey: '',
-      secret: '',
+      apikey: '8gGprOSNg8hEhAibVFalU8JjMjMB5TqNhbJqkJNpUxVMdTlzawYDnnqZ0tnKeXZn',
+      secret: 'L8shsvxWJnZVaaR2PasdYfZFogs5LMLhrG3FKp3yTLg8tYjaURjaaJNijzOVt4NX',
       selectedExchange: this.props.exchangeList[0]
     };
 
@@ -54,9 +55,11 @@ class FullAside extends Component {
   }
   handleBtnConnect = async() => {
     const { ExchangeActions } = this.props;
+    var exchangeid = config.exchangeList[this.state.selectedExchange];
+
     try {
       await ExchangeActions.connectExchange({
-        exchange : this.state.selectedExchange,
+        exchange : exchangeid,
         apikey: this.state.apikey,
         secret: this.state.secret
       })
@@ -71,9 +74,10 @@ class FullAside extends Component {
 
   handleBtnDisconnect(){
     const { ExchangeActions } = this.props;
-    console.log('Disconnect Exchange', this.state.selectedExchange);
+    console.log('Disconnect Exchange Name', this.state.selectedExchange);
+    var exchangeid = config.exchangeList[this.state.selectedExchange];
 
-    ExchangeActions.disconnectExchange(this.state.selectedExchange)
+    ExchangeActions.disconnectExchange(exchangeid)
   }
   
   // onDismiss() {
@@ -102,11 +106,11 @@ class FullAside extends Component {
         </div>
         <div className="mb-3">
           <h6>API Key</h6>
-          <Input type="text" id="apiKey" placeholder="Enter API key" onChange={ this.handleChangeAPIKey }/>
+          <Input type="text" id="apiKey" placeholder="Enter API key" onChange={ this.handleChangeAPIKey } value={this.state.apikey} />
         </div>
         <div className="mb-3">
           <h6>Secret</h6>
-          <Input type="password" id="secret" placeholder="Enter Secret" onChange={ this.handleChangeSecret }/>
+          <Input type="password" id="secret" placeholder="Enter Secret" onChange={ this.handleChangeSecret } value={this.state.secret}/>
         </div>
         <div className="mb-3">
           {

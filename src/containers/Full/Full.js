@@ -40,6 +40,7 @@ class Full extends Component {
       
       result.exchangeList.forEach(function(ele, idx){
         ExchangeActions.setConnectedExchange({'name':ele, 'value': false });
+        ExchangeActions.setSymbols({'name':ele, 'value': [] });
       });
 
     });
@@ -89,7 +90,6 @@ class Full extends Component {
 export default connect(
   (state) => ({
     exchangeList: state.exchange.get('exchangeList'),
-    exchangeCoins: state.exchange.get('exchangeCoins'),
   }),
   (dispatch) => ({
     ExchangeActions: bindActionCreators(exchangeActions, dispatch),

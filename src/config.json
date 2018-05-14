@@ -1,7 +1,8 @@
 {
-    "exchangeList": [
-        "bittrex",
-        "binance",
-        "okcoinusd"
-    ]
+    "exchangeList": {
+        "Binance": "binance",
+        "Bittrex": "bittrex",
+        "Cryptopia": "cryptopia",
+        "KuCoin": "kucoin"
+    }
 }

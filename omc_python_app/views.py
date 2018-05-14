@@ -30,14 +30,15 @@ def connectExchange(request):
 
     try:
         balance = exchangeIns[exchangeName].fetch_balance()
-        return JsonResponse({exchangeName: True})
     except Exception as e:
         return HttpResponseBadRequest()
-
-    # if( exchangeIns[exchangeName] ):
-    #     return JsonResponse({exchangeName: True})
-    # else:
-    #     return HttpResponseForbidden()
+    try:
+        symbols = exchangeIns[exchangeName].symbols
+        btcSymbols = [k for k in symbols if 'BTC' in k]
+    except Exception as e:
+        return HttpResponseBadRequest()
+    
+    return JsonResponse({exchangeName: True, 'symbol': btcSymbols})
 
 def disconnectExchange(request):
 
@@ -45,3 +46,15 @@ def disconnectExchange(request):
     del exchangeIns[exchangeName]
     
     return JsonResponse({exchangeName: False})
+
+def getTicker(request):
+
+    exchangeName = request.POST['exchange']
+    pair = request.POST['pair']
+
+    if exchangeIns[exchangeName]:
+        exchange = exchangeIns[exchangeName]
+        ticker = exchange.fetch_ticker(pair)
+        return JsonResponse({ 'bid': ticker['bid'], 'ask': ticker['ask'], 'last': ticker['last'] })
+    else:
+        return HttpResponseBadRequest()

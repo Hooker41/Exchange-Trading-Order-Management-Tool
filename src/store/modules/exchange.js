@@ -4,28 +4,36 @@ import { Map, fromJS } from 'immutable';
 import { pender } from 'redux-pender';
 
 import * as ExchangeAPI from 'lib/api/exchange';
+import config from 'config.json';
 
 // action types
-const GET_EXCHANGE_COINS = 'GET_EXCHANGE_COINS';
+const SET_SYMBOLS = 'SET_SYMBOLS';
 const SET_CONNECTED_EXCHANGE = 'SET_CONNECTED_EXCHANGE';
 const SET_EXCHANGE_LIST = 'SET_EXCHANGE_LIST';
 const CONNECT_EXCHANGE = 'CONNECT_EXCHANGE';
 const DISCONNECT_EXCHANGE = 'DISCONNECT_EXCHANGE';
 const SET_ERROR = 'SET_ERROR';
+const GET_TICKER = 'GET_TICKER';
 
 // action creator
-export const getExchangeCoins = createAction(GET_EXCHANGE_COINS, ExchangeAPI.getExchangeCoins);
+export const setSymbols = createAction(SET_SYMBOLS);
 export const setConnectedExchange = createAction(SET_CONNECTED_EXCHANGE);
 export const setExchangeList = createAction(SET_EXCHANGE_LIST);
 export const connectExchange = createAction(CONNECT_EXCHANGE, ExchangeAPI.connectExchange);
 export const disconnectExchange = createAction(DISCONNECT_EXCHANGE, ExchangeAPI.disconnectExchange);
 export const setError = createAction(SET_ERROR);
+export const getTicker = createAction(GET_TICKER, ExchangeAPI.getTicker);
 
 // initial state
 const initialState = Map({
-    exchangeCoins: [],
     connectedExchanges: Map({}),
     exchangeList:[],
+    symbols: Map({}),
+    marketPrice: Map({
+        bid: 0,
+        ask: 0,
+        last: 0
+    }),
     error: Map({}),
 });
 
@@ -42,22 +50,21 @@ export default handleActions({
     [SET_ERROR]: (state, action) => {
         return state.set('error', fromJS(action.payload));
     },
-    ...pender({
-        type: GET_EXCHANGE_COINS,
-        onSuccess: (state, action) => {
-            const { coins } = action.payload.data;
-            console.log('Exchange Coins',action.payload);
-
-            return state.set('exchangeCoins', coins );
-        }
-    }),
+    [SET_SYMBOLS]: (state, action) => {
+        const { name, value } = action.payload;
+        return state.setIn(['symbols', name], value);
+    },
     ...pender({
         type: CONNECT_EXCHANGE,
         onSuccess: (state, action) => {
-            const name = Object.keys(action.payload.data)[0];
+            const exchangeId = Object.keys(action.payload.data)[0];
             const value = Object.values(action.payload.data)[0];
-
-            return state.setIn(['connectedExchanges', name], value)
+            const symbols = Object.values(action.payload.data)[1];
+            console.log(symbols);
+            const exchangeName = Object.keys(config.exchangeList).find(key => config.exchangeList[key] === exchangeId);
+            
+            return state.setIn(['connectedExchanges', exchangeName], value)
+                        .setIn(['symbols', exchangeName], symbols)
                         .set('error', Map({}));
         },
         onFailure: (state, action) => {
@@ -67,10 +74,19 @@ export default handleActions({
     ...pender({
         type: DISCONNECT_EXCHANGE,
         onSuccess: (state, action) => {
-            const name = Object.keys(action.payload.data)[0];
+            const exchangeId = Object.keys(action.payload.data)[0];
             const value = Object.values(action.payload.data)[0];
             
-            return state.setIn(['connectedExchanges', name], value);
+            const exchangeName = Object.keys(config.exchangeList).find(key => config.exchangeList[key] === exchangeId);
+            console.log('exchangeName', exchangeName);
+            return state.setIn(['connectedExchanges', exchangeName], value)
+                            .setIn(['symbols', exchangeName], []);
+        }
+    }),
+    ...pender({
+        type: GET_TICKER,
+        onSuccess: (state, action) => {
+            return state.set('marketPrice', fromJS(action.payload.data));
         }
     }),
 }, initialState);

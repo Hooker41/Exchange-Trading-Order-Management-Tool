@@ -7,4 +7,5 @@ urlpatterns = [
     path('api/v1.0/coins/', views.getExchanges ),
     path('api/v1.0/connect', views.connectExchange ),
     path('api/v1.0/disconnect/', views.disconnectExchange ),
+    path('api/v1.0/getticker', views.getTicker ),
 ]

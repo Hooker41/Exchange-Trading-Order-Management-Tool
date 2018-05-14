@@ -12,6 +12,7 @@ import {
 } from 'reactstrap';
 import { AppSwitch } from '@coreui/react'
 import TradingViewWidget from 'react-tradingview-widget';
+import config from 'config.json';
 
 import { connect } from 'react-redux';
 import {bindActionCreators} from 'redux';
@@ -27,21 +28,130 @@ class Trade extends Component {
 
     this.state = {
       sell_tg_cnt: 1,
+      selectedExchange:'',
+      selectedPair:'',
+      tradingViewSymbol:'BTCUSD',
+      
+      buyunit:1.0,
+      buytype:'last',
+      buyprice: 0,
+      buytotal:0,
     };
 
+    this.getTicker = this.getTicker.bind(this);
     this.handleAddSellTarget = this.handleAddSellTarget.bind(this);
+    this.handleChangeExchange = this.handleChangeExchange.bind(this);
+    this.handleChangePair = this.handleChangePair.bind(this);
+    this.handleChangeBuyUnit = this.handleChangeBuyUnit.bind(this);
+    this.handleChangeBuyType = this.handleChangeBuyType.bind(this);
+  }
+  handleChangePair(e){
+    const newPair = e.target.value;
+    const ary = newPair.split('/');
+    this.setState({
+      selectedPair: e.target.value,
+      tradingViewSymbol: this.state.selectedExchange + ':' + ary[0] + ary[1]
+    })
   }
   
+  handleChangeExchange(e){
+    this.setState({
+      selectedExchange: e.target.value
+    });
+  }
   handleAddSellTarget(){
     this.setState({
       sell_tg_cnt: this.state.sell_tg_cnt + 1
     });
   }
+  handleChangeBuyUnit(e){
+    this.setState({
+      buyunit: e.target.value
+    })
 
+    var total = e.target.value * this.state.buyprice;
+    this.setState({
+      buytotal: total
+    })
+  }
+  handleChangeBuyType(e){
+    this.setState({
+      buytype: e.target.value
+    })
+    this.getTicker(e.target.value);
+  }
+  componentWillMount = async() => {
+    console.log('componentWillMount');
+    await this.getTicker(this.state.buytype);
+  }
+  componentDidMount(){
+    console.log('componentDidMount');
+    // this.intervalId = setInterval(this.getTicker.bind(this), 1000);
+  }
+  componentWillUnmount(){
+    clearInterval(this.intervalId);
+  }
+  getTicker = async(buytype) => {
+    const { selectedExchange, selectedPair } = this.state;
+    const { marketPrice } = this.props;
+    if(selectedPair.length > 0){
+      const { ExchangeActions } = this.props;
+      var exchangeid = config.exchangeList[selectedExchange];
+
+      try {
+        const result = await ExchangeActions.getTicker({
+          exchange : exchangeid,
+          pair: selectedPair
+        })
+    
+        console.log('result', buytype);
+        console.log(result['data'][buytype]);
+        this.setState({
+          buyprice: result['data'][buytype]
+        })
+        
+      } catch (e) {
+        return;
+      }
+    }
+  }
+  // getTicker = async() => {
+  //   const { selectedExchange, selectedPair } = this.state;
+  //   console.log('Running getTicker');
+  //   if(selectedPair.length > 0){
+  //     console.log('getTicker', selectedPair);
+  //     const { ExchangeActions } = this.props;
+  //     var exchangeid = config.exchangeList[selectedExchange];
+
+  //     try {
+  //       await ExchangeActions.getTicker({
+  //         exchange : exchangeid,
+  //         pair: selectedPair
+  //       })
+  //     } catch (e) {
+  //       return;
+  //     }
+  //   }
+  // }
+  
   render() {
-    const { connectedExchanges } = this.props;
+    const { connectedExchanges, symbols, marketPrice } = this.props;
+    const { selectedExchange, sell_tg_cnt } = this.state;
     const isConnected = connectedExchanges.toJS();
-    const sell_tg_cnt = this.state.sell_tg_cnt;
+    var tradingPair = symbols.toJS();
+    console.log('trading pair', tradingPair);
+    tradingPair = tradingPair[selectedExchange];
+    console.log('selectedExchange', selectedExchange);
+    console.log('trading pair', tradingPair);
+    const marketData = marketPrice.toJS();
+    console.log('marketData', marketData);
+
+    var connectionExist = false;
+    for (var key in isConnected) {
+      if (isConnected.hasOwnProperty(key)) {
+        connectionExist = connectionExist || isConnected[key];
+      }
+    }
 
     return (
       <div className="animated fadeIn">
@@ -59,9 +169,10 @@ class Trade extends Component {
                         <Label htmlFor="omc_exchange_list">Exchanges</Label>
                       </Col>
                       <Col xs="6">
-                        <Input type="select" name="omc_exchange_list" id="omc_exchange_list" >
-                          { Object.keys(isConnected).length == 0 ? <option>{'No exchange conneced'}</option> : 
-                          
+                        <Input type="select" name="omc_exchange_list" id="omc_exchange_list" onChange={this.handleChangeExchange} >
+                          { !connectionExist ? <option value='NoEx' >No exchange connected</option> : 
+                            <option value="">Select Exchange</option>}
+                          {
                             Object.keys(isConnected).map((key, idx) => {
                               return isConnected[key] ? <option value={key} key={idx} >{key}</option> : ''
                             })
@@ -70,10 +181,30 @@ class Trade extends Component {
                       </Col>
                     </Row>
                   </Col>
+
+                  <Col xs="3">
+                    <Row>
+                      <Col xs="5">
+                        <Label htmlFor="trading_pair">Trading pair</Label>
+                      </Col>
+                      <Col xs="6">
+                        <Input type="select" name="trading_pair" id="trading_pair" disabled = {!connectionExist } onChange={ this.handleChangePair }>
+                          { tradingPair === undefined || tradingPair.length == 0 ? '':<option value="">Select Pair</option>}
+                          {
+                            tradingPair !== undefined ?
+                              tradingPair.map((ele, idx)=>{
+                                return <option value={ele}>{ele}</option>
+                              }) : ''
+                          }
+                        </Input>
+                      </Col>
+                    </Row>
+                  </Col>
+
                 </Row>
                 <Row className='mb-3'>
                   <Col className='chartWidget ' >
-                    <TradingViewWidget symbol="COINBASE:BTCUSD" autosize />
+                    <TradingViewWidget symbol={this.state.tradingViewSymbol} autosize />
                   </Col>
                 </Row>
                 <Row className='mb-3'>
@@ -86,28 +217,31 @@ class Trade extends Component {
                       <CardBody>
                         <FormGroup>
                           <Label htmlFor="buy_unit">Units</Label>
-                          <Input type="text" id="buy_unit" required />
+                          <Input type="text" id="buy_unit" required value={this.state.buyunit} onChange={ this.handleChangeBuyUnit }/>
                         </FormGroup>
                         <FormGroup row className="my-0">
                           <Col xs="5">
                             <FormGroup>
                               <Label htmlFor="buy_type">Buy price</Label>
-                              <Input type="select" id="buy_type">
-                                <option value="market">Limit</option>
-                                <option value="limit">Market</option>
+                              <Input type="select" id="buy_type" value={this.state.buytype} onChange={ this.handleChangeBuyType } >
+                                <option value="bid">Bid</option>
+                                <option value="last">Last</option>
+                                <option value="ask">Ask</option>
+                                <option value="limit">Limit</option>
+                                <option value="market">Market</option>
                               </Input>
                             </FormGroup>
                           </Col>
                           <Col xs="7">
                             <FormGroup>
                               <Label htmlFor="buy_price" >&nbsp;</Label>
-                              <Input type="text" id="buy_price"/>
+                              <Input type="text" id="buy_price" value = {this.state.buyprice} disabled={this.state.buytype === 'market'}/>
                             </FormGroup>
                           </Col>
                         </FormGroup>
                         <FormGroup>
                           <Label htmlFor="total_buy">Total buy</Label>
-                          <Input type="text" id="total_buy" required />
+                          <Input type="text" id="total_buy" readOnly value={this.state.buytotal} />
                         </FormGroup>
                       </CardBody>
                     </Card>
@@ -251,6 +385,8 @@ class Trade extends Component {
 export default connect(
   (state) => ({
     connectedExchanges: state.exchange.get('connectedExchanges'),
+    symbols: state.exchange.get('symbols'),
+    marketPrice: state.exchange.get('marketPrice'),
   }),
   (dispatch) => ({
     ExchangeActions: bindActionCreators(exchangeActions, dispatch),
